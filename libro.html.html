@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Libro</title>
+<style>
+  :root{
+    --bg:#ffd6e8;
+    --book:#ffeaf3;
+    --accent:#ff6fa1;
+    --page:#fff0f7;
+    --text:#ad4f71;
+  }
+  html,body{height:100%;margin:0;font-family:Georgia, "Times New Roman", serif;background:var(--bg);-webkit-font-smoothing:antialiased}
+  .wrap{height:100%;display:flex;align-items:center;justify-content:center;padding:28px;box-sizing:border-box}
+  /* soft repeated pattern using radial gradients instead of external images */
+  body::before{
+    content:"";
+    position:fixed;left:0;top:0;right:0;bottom:0;pointer-events:none;
+    background:
+      radial-gradient(circle at 10% 10%, rgba(255,255,255,0.6) 0 6px, transparent 7px),
+      radial-gradient(circle at 50% 50%, rgba(255,200,230,0.12) 0 6px, transparent 8px),
+      radial-gradient(circle at 85% 30%, rgba(255,230,245,0.10) 0 6px, transparent 8px);
+    background-size: 120px 120px, 200px 200px, 160px 160px;
+    opacity:0.95;
+  }
+
+  .book{
+    width:1000px;height:600px;border-radius:14px;display:flex;overflow:hidden;
+    background:linear-gradient(180deg,var(--book),#fff);box-shadow:0 12px 40px rgba(255,80,150,0.18);
+    border:2px solid rgba(255,140,170,0.25);position:relative;
+  }
+
+  /* Pages */
+  .page{
+    width:50%;height:100%;padding:40px;box-sizing:border-box;
+    background:linear-gradient(180deg,var(--page),#fff);
+    position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+    border-right:1px solid rgba(255,180,200,0.3);
+    color:var(--text);
+  }
+  .page.right{
+    border-left:1px solid rgba(255,180,200,0.3);
+  }
+
+  /* subtle page edge shadow */
+  .page::after{
+    content:"";
+    position:absolute;right:0;top:0;bottom:0;width:1px;background:linear-gradient(180deg,rgba(0,0,0,0.02),rgba(0,0,0,0.06));
+    pointer-events:none;
+  }
+  .page.right::after{ left:0; right:auto; transform: scaleX(-1); }
+
+  h1{margin:10px 0 6px 0;color:var(--accent);font-size:28px;display:flex;align-items:center;gap:10px}
+  p{margin:18px 0 0 0;color:var(--text);font-size:18px;line-height:1.5;text-align:center;white-space:pre-line;max-width:82%}
+
+  /* heart + strawberry small badges using emoji inside a circle */
+  .badge {
+    display:inline-flex;align-items:center;justify-content:center;
+    width:36px;height:36px;border-radius:50%;background:linear-gradient(180deg,#fff,#ffdff1);
+    box-shadow:0 4px 10px rgba(255,90,140,0.18);font-size:18px;margin-right:6px;
+  }
+
+  /* controls */
+  .controls{position:absolute;bottom:20px;left:0;right:0;text-align:center}
+  .btn{
+    display:inline-block;padding:12px 28px;border-radius:26px;border:0;background:var(--accent);color:white;font-weight:700;
+    margin:0 12px;cursor:pointer;box-shadow:0 8px 20px rgba(255,90,140,0.22);transition:transform .15s ease,opacity .15s;
+  }
+  .btn:active{transform:translateY(2px)}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none}
+
+  /* decorative CSS "strawberries" in corners using pseudo elements (no external images) */
+  .book::before, .book::after{
+    content:"";
+    position:absolute;
+    width:80px;height:80px;border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, #ff6b88 0 20%, #ff2f6f 20% 40%, #ff6b88 40%),
+                linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.0));
+    box-shadow: 0 6px 18px rgba(255,60,120,0.12);
+    opacity:0.95;
+    transform: rotate(-12deg);
+    pointer-events:none;
+  }
+  .book::before{left:-30px;top:-20px}
+  .book::after{right:-30px;bottom:-20px;transform: rotate(8deg) scale(1.05)}
+
+  /* responsive: stack pages on narrow screens */
+  @media(max-width:980px){
+    .book{width:95%;height:80vh;flex-direction:column}
+    .page{width:100%;height:50%}
+    .page.right{border-left:0;border-top:1px solid rgba(255,180,200,0.3)}
+  }
+
+  /* small accessibility focus */
+  .btn:focus{outline:3px solid rgba(255,100,150,0.22)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="book" role="region" aria-label="Libro rosita">
+    <div class="page" id="leftPage" aria-live="polite">
+      <h1><span class="badge">🍓</span><span id="leftTitle">🍓 Página 1</span></h1>
+      <p id="leftText">Cargando…</p>
+    </div>
+
+    <div class="page right" id="rightPage" aria-live="polite">
+      <h1><span class="badge">💗</span><span id="rightTitle">💗 Página 2</span></h1>
+      <p id="rightText">Cargando…</p>
+    </div>
+
+    <div class="controls" aria-hidden="false">
+      <button class="btn" id="prevBtn" onclick="prev()" aria-label="Página anterior">◀ Regresar</button>
+      <button class="btn" id="nextBtn" onclick="next()" aria-label="Página siguiente">Siguiente ➤</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // contenido de páginas (pares: izquierda/derecha)
+  const pages = [
+    {
+      left: { title: "🍓 Así empieza nuestro libro", text: "Nuestra historia empieza aquí,en un libro lleno de amor, pero también comenzó en un abril.\nDesde entonces abril se volvió mi mes favorito. Eres la coincidencia más bonita que he tenido y jamás me arepentiré de haberte conocido porque eres mi solecito y mi felicidad. <br> Sin embargo pensé que nuestra historia terminó ese dia taaaan horrible (cuando te terminé😞), de verdad que ese día fui una completa tonta, pero ahora volvemos a estar juntas, espero y deseo que ahora sea para siempre.</br>" },
+      right: { title: "💗 Cada capítulo es más bonito contigo.", text: "Con el paso de los días solo confirmo el hecho de que eres la persona con la cual quiero pasar toda mi vida, cadia día que pasa soy mas feliz a tu lado, porque a pesar de la distancia me has hecho muy feliz y siempre tengo una sonrisa gracias a ti.\nDesde que llegaste todo es más bonito, cambiaste mi forma de ser (obvio para bien), y cambiaste la perspectiva de mi futuro.\nCreo que la vida pintada de rosa si existe, porque tú me lo estás enseñando, aunque puede que algunas veces se torne gris, volverá al rosa." }
+    },
+    {
+      left: { title: "🍓 Gracias por existir.", text: "Amor, me has enseñado tantas cosas en este tiempo, estoy tan agradecida de que hayas aparecido un dia cualquiera y cambiar mi mundo para siempre.\nEres mi solecito en mis días grises, no siempre son grises, pero el sol todos lo necesitamos porque es la principal fuente de vitamina, asi que por eso eres mi sol, eres indespensable en mi vida y te necesito en ella.\n" },
+      right: { title: "💞 Nuestra historia apenas comienza…", text: "Este libro es muy pequeñito, pero muy muy muy pequeñito, aún falta por escribir más de nuestra historia.Espero que en un futuro el próximo libro se lo leamos a nuestros 20 mil gatitos y hij@s.\nNunca dudes de mi amor por ti, te amo muchisimo, pero muuuuuuuuuuuuucho, bastante, más grande que el universo, yo diría que infinitamente.\nEres mi sol, yo la luna y juntas somos un eclipse.💗" }
+    }
+  ];
+
+  let current = 0; // índice del par actual (0..pages.length-1)
+
+  const leftTitleEl = document.getElementById('leftTitle');
+  const rightTitleEl = document.getElementById('rightTitle');
+  const leftTextEl = document.getElementById('leftText');
+  const rightTextEl = document.getElementById('rightText');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+
+  function clamp(n, a, b){ return Math.max(a, Math.min(b, n)); }
+
+  function updateBook(){
+    current = clamp(current, 0, pages.length - 1);
+    const left = pages[current].left;
+    const right = pages[current].right;
+
+    leftTitleEl.textContent = left.title;
+    rightTitleEl.textContent = right.title;
+    leftTextEl.innerHTML = left.text.replace(/\n/g, '<br>');
+    rightTextEl.innerHTML = right.text.replace(/\n/g, '<br>');
+
+    prevBtn.disabled = (current === 0);
+    nextBtn.disabled = (current === pages.length - 1);
+  }
+
+  function next(){
+    if(current < pages.length - 1){
+      current++;
+      updateBook();
+    }
+  }
+
+  function prev(){
+    if(current > 0){
+      current--;
+      updateBook();
+    }
+  }
+
+  // init on DOM ready
+  document.addEventListener('DOMContentLoaded', updateBook);
+</script>
+</body>
+</html>
